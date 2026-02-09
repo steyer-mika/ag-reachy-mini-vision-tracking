@@ -1,0 +1,44 @@
+# ======================
+# Python bytecode
+# ======================
+__pycache__/
+*.py[cod]
+*$py.class
+
+# ======================
+# Virtual environments
+# ======================
+venv/
+.venv/
+env/
+.env/
+ENV/
+virtualenv/
+
+# ======================
+# Distribution / packaging
+# ======================
+build/
+dist/
+*.egg-info/
+.eggs/
+
+# ======================
+# Pytest / coverage
+# ======================
+.pytest_cache/
+.coverage
+coverage.xml
+htmlcov/
+
+# ======================
+# Logs
+# ======================
+*.log
+
+# ======================
+# IDE / Editor files
+# ======================
+.vscode/
+.idea/
+*.iml
