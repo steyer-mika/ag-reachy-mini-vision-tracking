@@ -35,3 +35,10 @@ htmlcov/
 # Logs
 # ======================
 *.log
+
+# ======================
+# Other
+# ======================
+
+# Do not publish copyrighted images to GitHub (https://www.researchgate.net/figure/Twenty-one-anatomical-landmarks-detected-by-MediaPipe-hands-are-illustratedOne_fig5_380819368)
+Twenty-one-anatomical-landmarks-detected-by-MediaPipe-hands-are-illustratedOne.png
