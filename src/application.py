@@ -1,20 +1,18 @@
-from pathlib import Path
 import cv2
 import time
 
+from config.config_loader import Config
 from hand_tracker import HandTracker
 
-WINDOW_HEIGHT = 720
-WINDOW_WIDTH = 1280
 
 class Application:
-    def __init__(self, model_path: Path):
-        self.model_path = model_path
+    def __init__(self, config: Config):
+        self.config = config
 
     def run(self):
-        cap = cv2.VideoCapture(0)
-        cap.set(cv2.CAP_PROP_FRAME_WIDTH, WINDOW_WIDTH)
-        cap.set(cv2.CAP_PROP_FRAME_HEIGHT, WINDOW_HEIGHT)
+        cap = cv2.VideoCapture(self.config.CAMERA_INDEX)
+        cap.set(cv2.CAP_PROP_FRAME_WIDTH, self.config.CAMERA_WIDTH)
+        cap.set(cv2.CAP_PROP_FRAME_HEIGHT, self.config.CAMERA_HEIGHT)
 
         print("=" * 60)
         print("HAND-CONTROLLED ROBOT SYSTEM")
@@ -27,7 +25,7 @@ class Application:
         frame_count = 0
 
         try:
-            with HandTracker(self.model_path) as tracker:
+            with HandTracker(self.config.MODEL_PATH) as tracker:
                 while cap.isOpened():
                     success, frame = cap.read()
                     

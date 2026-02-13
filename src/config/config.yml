@@ -1,0 +1,7 @@
+model:
+  path: ./models/hand_landmarker.task
+
+camera:
+  index: 0
+  width: 1280
+  height: 720

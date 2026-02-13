@@ -1,17 +1,15 @@
-from pathlib import Path
-
 from application import Application
-
-MODEL_PATH = Path("./models/hand_landmarker.task")
-
+from config.config_loader import get_config
 
 def main():
-    if not MODEL_PATH.exists():
-        print(f"Error: Model file not found at {MODEL_PATH}")
+    config = get_config()
+
+    if not config.MODEL_PATH.exists():
+        print(f"Error: Model file not found at {config.MODEL_PATH}")
         print("Please download the hand landmarker model from MediaPipe")
         return
-    
-    app = Application(MODEL_PATH)
+
+    app = Application(config)
 
     app.run()
     
