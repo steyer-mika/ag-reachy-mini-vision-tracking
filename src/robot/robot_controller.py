@@ -2,9 +2,12 @@ import time
 from typing import Optional
 
 from reachy_mini import ReachyMini
+from reachy_mini.utils.interpolation import InterpolationTechnique
+from reachy_mini.utils import create_head_pose
 
 from config.config_loader import Config
 from lib.logger import Logger
+import numpy as np
 
 
 class RobotController:
@@ -13,12 +16,14 @@ class RobotController:
         self.robot: Optional[ReachyMini] = None
         self.logger = Logger(RobotController.__name__).get()
         self.connected = False
+        self.current_yaw = 0.0  # Track current yaw position
 
     def __enter__(self):
         try:
             self.robot = ReachyMini()
             self.robot.__enter__()
             self.connected = True
+            self.current_yaw = 0.0
             self.logger.info("Successfully connected to Reachy Mini!")
             return self
         except Exception as e:
@@ -61,6 +66,8 @@ class RobotController:
 
             self.logger.info("Startup gesture complete!")
 
+            self.move("center")  # Ensure robot is in neutral position after gesture
+
         except Exception as e:
             self.logger.error(f"Error performing startup gesture: {e}")
 
@@ -94,3 +101,75 @@ class RobotController:
 
         except Exception as e:
             self.logger.error(f"Error reacting to finger count: {e}")
+
+    def move(self, direction: str) -> None:
+        if not self.connected or not self.robot:
+            self.logger.warning("Robot not connected, skipping movement")
+            return
+
+        try:
+            duration = self.config.ANTENNA_DURATION
+
+            if direction == "left":
+                self.current_yaw -= np.deg2rad(30)
+                if self.current_yaw < -2 * np.pi:
+                    self.current_yaw += 2 * np.pi
+
+                self.robot.goto_target(
+                    body_yaw=self.current_yaw,
+                    duration=duration,
+                    method=InterpolationTechnique.MIN_JERK,
+                )
+                time.sleep(duration)
+
+            elif direction == "right":
+                self.current_yaw += np.deg2rad(30)
+                if self.current_yaw > 2 * np.pi:
+                    self.current_yaw -= 2 * np.pi
+
+                self.robot.goto_target(
+                    body_yaw=self.current_yaw,
+                    duration=duration,
+                    method=InterpolationTechnique.MIN_JERK,
+                )
+                time.sleep(duration)
+
+            elif direction == "up":
+                # Head up = increase head_pitch
+                self.robot.goto_target(
+                    head=create_head_pose(z=10, mm=True),
+                    duration=duration,
+                    method=InterpolationTechnique.MIN_JERK,
+                )
+                time.sleep(duration)
+
+            elif direction == "down":
+                # Head down = decrease head_pitch
+                self.robot.goto_target(
+                    head=create_head_pose(z=-10, mm=True),
+                    duration=duration,
+                    method=InterpolationTechnique.MIN_JERK,
+                )
+                time.sleep(duration)
+
+            elif direction == "center" or direction == "reset":
+                self.current_yaw = 0.0
+                self.robot.goto_target(
+                    antennas=[0.0, 0.0],
+                    body_yaw=0.0,
+                    head=create_head_pose(z=0, mm=True),
+                    duration=duration,
+                    method=InterpolationTechnique.MIN_JERK,
+                )
+                time.sleep(duration)
+
+            else:
+                self.logger.warning(f"Unknown direction: {direction}")
+                return
+
+            self.logger.debug(
+                f"Robot moved: {direction} (yaw: {np.rad2deg(self.current_yaw):.1f}°)"
+            )
+
+        except Exception as e:
+            self.logger.error(f"Error moving robot: {e}")

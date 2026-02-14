@@ -1,6 +1,6 @@
 import asyncio
 import json
-from typing import Set
+from typing import Set, Callable, Optional, Union
 from websockets.asyncio.server import serve, ServerConnection
 
 from config.config_loader import Config
@@ -21,6 +21,9 @@ class WebSocketServer:
         # This is set when start() is called in the server thread
         self.loop = None
 
+        # Callback for handling robot control commands from clients
+        self.on_robot_control: Optional[Callable[[str], None]] = None
+
     async def register(self, websocket: ServerConnection) -> None:
         self.clients.add(websocket)
         self.logger.info(f"Client connected. Total clients: {len(self.clients)}")
@@ -32,14 +35,40 @@ class WebSocketServer:
     async def handler(self, websocket: ServerConnection) -> None:
         await self.register(websocket)
         try:
-            # Listen for incoming messages (connection stays open)
-            # We don't expect client messages, but this keeps the connection alive
+            # Listen for incoming messages from clients
             async for message in websocket:
                 self.logger.debug(f"Received message: {message}")
+                await self._handle_message(message)
         except Exception as e:
             self.logger.debug(f"Connection error: {e}")
         finally:
             await self.unregister(websocket)
+
+    async def _handle_message(self, message: Union[str, bytes]) -> None:
+        """Parse and handle incoming messages from clients."""
+        try:
+            # Handle both string and bytes messages
+            if isinstance(message, bytes):
+                message = message.decode("utf-8")
+
+            data = json.loads(message)
+            msg_type = data.get("type")
+
+            if msg_type == "robot_control":
+                direction = data.get("direction")
+                if direction and self.on_robot_control:
+                    self.logger.info(f"Robot control command received: {direction}")
+                    # Call the callback (which runs in the main thread via threadsafe call)
+                    self.on_robot_control(direction)
+                elif not self.on_robot_control:
+                    self.logger.warning("Robot control callback not set")
+            else:
+                self.logger.debug(f"Unknown message type: {msg_type}")
+
+        except json.JSONDecodeError as e:
+            self.logger.warning(f"Invalid JSON message: {e}")
+        except Exception as e:
+            self.logger.error(f"Error handling message: {e}")
 
     async def broadcast(self, message: dict) -> None:
         if self.clients:

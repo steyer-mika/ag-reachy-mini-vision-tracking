@@ -13,6 +13,10 @@ const ELEMENT = {
   rightHand: document.getElementById("right-hand"),
   handsDetected: document.getElementById("hands-detected"),
   lastUpdate: document.getElementById("last-update"),
+  btnUp: document.getElementById("btn-up"),
+  btnDown: document.getElementById("btn-down"),
+  btnLeft: document.getElementById("btn-left"),
+  btnRight: document.getElementById("btn-right"),
 };
 
 // #############################################################################
@@ -33,6 +37,22 @@ const EMOJIS = {
   8: "🤲",
   9: "👏",
   10: "🙏",
+};
+
+// Keyboard to direction mapping (WASD and Arrow keys)
+const KEY_MAP = {
+  w: "up",
+  W: "up",
+  ArrowUp: "up",
+  s: "down",
+  S: "down",
+  ArrowDown: "down",
+  a: "left",
+  A: "left",
+  ArrowLeft: "left",
+  d: "right",
+  D: "right",
+  ArrowRight: "right",
 };
 
 // #############################################################################
@@ -174,3 +194,123 @@ const attemptReconnect = () => {
 // #############################################################################
 
 connect();
+
+// #############################################################################
+//                           Robot Control Logic
+// #############################################################################
+
+/**
+ * Send a movement command to the robot via WebSocket.
+ * @param {string} direction - The direction to move ("up", "down", "left", "right").
+ */
+const sendMovementCommand = (direction) => {
+  if (ws && ws.readyState === WebSocket.OPEN) {
+    const command = {
+      type: "robot_control",
+      direction: direction,
+      timestamp: Date.now(),
+    };
+    ws.send(JSON.stringify(command));
+    console.log(`Sent movement command: ${direction}`);
+  } else {
+    console.warn("WebSocket not connected, cannot send command");
+  }
+};
+
+/**
+ * Visually activate a button (add pressed state).
+ * @param {string} direction - The direction button to activate.
+ */
+const activateButton = (direction) => {
+  const btn = ELEMENT[`btn${direction.charAt(0).toUpperCase() + direction.slice(1)}`];
+  if (btn) {
+    btn.classList.add("active");
+  }
+};
+
+/**
+ * Visually deactivate a button (remove pressed state).
+ * @param {string} direction - The direction button to deactivate.
+ */
+const deactivateButton = (direction) => {
+  const btn = ELEMENT[`btn${direction.charAt(0).toUpperCase() + direction.slice(1)}`];
+  if (btn) {
+    btn.classList.remove("active");
+  }
+};
+
+// #############################################################################
+//                           Keyboard Event Handlers
+// #############################################################################
+
+// Track pressed keys to avoid repeat events
+const pressedKeys = new Set();
+
+/**
+ * Handle keydown events for robot control.
+ */
+document.addEventListener("keydown", (event) => {
+  const direction = KEY_MAP[event.key];
+  if (direction && !pressedKeys.has(event.key)) {
+    pressedKeys.add(event.key);
+    event.preventDefault();
+    sendMovementCommand(direction);
+    activateButton(direction);
+  }
+});
+
+/**
+ * Handle keyup events for robot control.
+ */
+document.addEventListener("keyup", (event) => {
+  const direction = KEY_MAP[event.key];
+  if (direction) {
+    pressedKeys.delete(event.key);
+    deactivateButton(direction);
+  }
+});
+
+// #############################################################################
+//                           Button Click Handlers
+// #############################################################################
+
+/**
+ * Set up click handlers for control buttons.
+ */
+const setupButtonHandlers = () => {
+  const buttons = [ELEMENT.btnUp, ELEMENT.btnDown, ELEMENT.btnLeft, ELEMENT.btnRight];
+  
+  buttons.forEach((btn) => {
+    if (btn) {
+      const direction = btn.dataset.direction;
+      
+      // Mouse events
+      btn.addEventListener("mousedown", () => {
+        sendMovementCommand(direction);
+        btn.classList.add("active");
+      });
+      
+      btn.addEventListener("mouseup", () => {
+        btn.classList.remove("active");
+      });
+      
+      btn.addEventListener("mouseleave", () => {
+        btn.classList.remove("active");
+      });
+      
+      // Touch events for mobile
+      btn.addEventListener("touchstart", (e) => {
+        e.preventDefault();
+        sendMovementCommand(direction);
+        btn.classList.add("active");
+      });
+      
+      btn.addEventListener("touchend", (e) => {
+        e.preventDefault();
+        btn.classList.remove("active");
+      });
+    }
+  });
+};
+
+setupButtonHandlers();

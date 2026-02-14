@@ -2,6 +2,7 @@ import time
 import cv2
 import asyncio
 import threading
+from typing import Optional
 
 from config.config_loader import Config
 from tracking.hand_tracker import HandTracker
@@ -20,6 +21,9 @@ class Application:
         self.ws_server = WebSocketServer(self.config)
         self.ws_thread = None
 
+        # Reference to robot controller for handling WebSocket control commands
+        self.robot_controller: Optional[RobotController] = None
+
         # Finger count tracking for robot reaction stability
         # We track the last count and how long it's been stable to avoid
         # reacting to momentary detection glitches
@@ -32,6 +36,14 @@ class Application:
 
         # Frame counter for skip-processing optimization
         self.frame_counter = 0
+
+    def _handle_robot_control(self, direction: str) -> None:
+        """Handle robot control commands received from WebSocket clients."""
+        if self.robot_controller:
+            self.logger.info(f"Executing robot movement: {direction}")
+            self.robot_controller.move(direction)
+        else:
+            self.logger.warning("Robot controller not available for control command")
 
     def start_websocket_server(self) -> None:
         self.ws_thread = threading.Thread(target=self.ws_server.start, daemon=True)
@@ -69,6 +81,9 @@ class Application:
             )
 
     def run(self) -> None:
+        # Set up robot control callback before starting the WebSocket server
+        self.ws_server.on_robot_control = self._handle_robot_control
+
         self.start_websocket_server()
 
         # Wait for WebSocket server to initialize before proceeding
@@ -100,6 +115,9 @@ class Application:
                 HandTracker(self.config) as tracker,
                 RobotController(self.config) as robot,
             ):
+                # Store reference to robot controller for WebSocket control commands
+                self.robot_controller = robot
+
                 # Perform startup gesture to indicate the system is ready
                 robot.startup_gesture()
 
