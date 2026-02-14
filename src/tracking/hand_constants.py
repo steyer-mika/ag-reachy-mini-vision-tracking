@@ -1,48 +1,63 @@
-# Finger tip landmark indices (MediaPipe hand model)
-FINGER_TIPS = [4, 8, 12, 16, 20]  # thumb, index, middle, ring, pinky
+# ==============================================================================
+# Finger Landmark Indices
+# ==============================================================================
 
-# Finger PIP joint indices (used to determine if finger is raised)
+# Fingertip landmarks (used for "finger raised" detection)
+# Order: thumb, index, middle, ring, pinky
+FINGER_TIPS = [4, 8, 12, 16, 20]
+
+# Proximal Interphalangeal (PIP) joint landmarks
+# These are compared against tips to determine if a finger is raised
+# For thumb, we use the IP joint (index 2) since thumb anatomy differs
 FINGER_PIPS = [2, 6, 10, 14, 18]
 
-# Hand skeleton connections for drawing
-# Each tuple is (start_landmark, end_landmark)
+# ==============================================================================
+# Hand Skeleton Connections
+# ==============================================================================
+
+# Defines how landmarks connect to form the hand skeleton visualization
+# Each tuple is (start_landmark_index, end_landmark_index)
 HAND_CONNECTIONS = [
-    # Thumb
-    (0, 1),
-    (1, 2),
-    (2, 3),
-    (3, 4),
-    # Index finger
-    (0, 5),
-    (5, 6),
-    (6, 7),
-    (7, 8),
-    # Middle finger
-    (0, 9),
-    (9, 10),
-    (10, 11),
-    (11, 12),
-    # Ring finger
-    (0, 13),
-    (13, 14),
-    (14, 15),
-    (15, 16),
-    # Pinky
-    (0, 17),
-    (17, 18),
-    (18, 19),
-    (19, 20),
-    # Palm connections
-    (5, 9),
-    (9, 13),
-    (13, 17),
+    # Thumb - from wrist through all thumb joints
+    (0, 1),  # Wrist to CMC
+    (1, 2),  # CMC to MCP
+    (2, 3),  # MCP to IP
+    (3, 4),  # IP to TIP
+    # Index finger - from wrist through all index joints
+    (0, 5),  # Wrist to MCP
+    (5, 6),  # MCP to PIP
+    (6, 7),  # PIP to DIP
+    (7, 8),  # DIP to TIP
+    # Middle finger - from wrist through all middle joints
+    (0, 9),  # Wrist to MCP
+    (9, 10),  # MCP to PIP
+    (10, 11),  # PIP to DIP
+    (11, 12),  # DIP to TIP
+    # Ring finger - from wrist through all ring joints
+    (0, 13),  # Wrist to MCP
+    (13, 14),  # MCP to PIP
+    (14, 15),  # PIP to DIP
+    (15, 16),  # DIP to TIP
+    # Pinky - from wrist through all pinky joints
+    (0, 17),  # Wrist to MCP
+    (17, 18),  # MCP to PIP
+    (18, 19),  # PIP to DIP
+    (19, 20),  # DIP to TIP
+    # Palm connections - connect the base of each finger
+    # Creates the "palm" structure in visualization
+    (5, 9),  # Index MCP to Middle MCP
+    (9, 13),  # Middle MCP to Ring MCP
+    (13, 17),  # Ring MCP to Pinky MCP
 ]
 
-# Visual styling
-LANDMARK_COLOR = (0, 255, 0)  # Green dots for joints
-CONNECTION_COLOR = (255, 255, 255)  # White lines between joints
-TEXT_COLOR = (0, 255, 0)  # Green text for per-hand count
-TOTAL_TEXT_COLOR = (255, 0, 0)  # Blue text for total count
+# ==============================================================================
+# Constants
+# ==============================================================================
+
+LANDMARK_COLOR = (0, 255, 0)  # Green - hand joint markers
+CONNECTION_COLOR = (255, 255, 255)  # White - skeleton lines
+TEXT_COLOR = (0, 255, 0)  # Green - per-hand finger count
+TOTAL_TEXT_COLOR = (255, 0, 0)  # Blue (BGR) - total finger count
 
 LANDMARK_RADIUS = 5
 CONNECTION_THICKNESS = 2

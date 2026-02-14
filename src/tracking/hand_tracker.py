@@ -21,7 +21,7 @@ class HandTracker:
         options = vision.HandLandmarkerOptions(
             base_options=base_options,
             running_mode=vision.RunningMode.VIDEO,
-            num_hands=2,  # TODO: Make multi-hand support configurable
+            num_hands=self.config.MAX_HANDS,
         )
         self.landmarker = vision.HandLandmarker.create_from_options(options)
         return self

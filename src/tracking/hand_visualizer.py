@@ -18,13 +18,14 @@ from tracking.finger_counter import count_raised_fingers
 def draw_hand_landmarks(frame: np.ndarray, hand_landmarks) -> None:
     h, w, _ = frame.shape
 
-    # Draw all the landmark points
+    # Draw landmark points (joint markers)
     for landmark in hand_landmarks:
+        # Convert normalized coordinates (0-1) to pixel coordinates
         x = int(landmark.x * w)
         y = int(landmark.y * h)
         cv2.circle(frame, (x, y), LANDMARK_RADIUS, LANDMARK_COLOR, -1)
 
-    # Draw connections between landmarks (the hand skeleton)
+    # Draw skeleton connections (lines between joints)
     for start_idx, end_idx in HAND_CONNECTIONS:
         start = hand_landmarks[start_idx]
         end = hand_landmarks[end_idx]
@@ -70,7 +71,7 @@ def draw_total_count(frame: np.ndarray, total_fingers: Optional[int]) -> None:
 def visualize_detection(
     frame: np.ndarray, detection_result, total_fingers: Optional[int] = 0
 ) -> np.ndarray:
-    # Draw each detected hand
+    # Draw visualization for each detected hand
     if detection_result.hand_landmarks:
         for idx, hand_landmarks in enumerate(detection_result.hand_landmarks):
             handedness = detection_result.handedness[idx][0].category_name
@@ -79,7 +80,7 @@ def visualize_detection(
             draw_hand_landmarks(frame, hand_landmarks)
             draw_finger_count_label(frame, hand_landmarks, handedness, finger_count)
 
-    # Draw total across all hands
+    # Draw aggregate total count
     draw_total_count(frame, total_fingers)
 
     return frame

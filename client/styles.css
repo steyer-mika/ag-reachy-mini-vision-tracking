@@ -135,20 +135,6 @@ main {
   transition: transform 0.3s ease;
 }
 
-.finger-count.pulse {
-  animation: count-pulse 0.4s ease;
-}
-
-@keyframes count-pulse {
-  0%,
-  100% {
-    transform: scale(1);
-  }
-  50% {
-    transform: scale(1.15);
-  }
-}
-
 .finger-label {
   font-size: 1rem;
   color: #999;

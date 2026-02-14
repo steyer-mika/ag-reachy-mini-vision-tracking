@@ -7,16 +7,19 @@ class Logger:
         self.logger = logging.getLogger(name)
         self.logger.setLevel(self._get_level(level))
 
+        # Consistent format: timestamp | level | module | message
         formatter = logging.Formatter(
             "%(asctime)s | %(levelname)-8s | %(name)s | %(message)s",
             datefmt="%Y-%m-%d %H:%M:%S",
         )
 
-        console_handler = logging.StreamHandler(sys.stdout)
-        console_handler.setFormatter(formatter)
-        self.logger.addHandler(console_handler)
+        # Only add handler if one doesn't exist (prevents duplicate logs)
+        if not self.logger.handlers:
+            console_handler = logging.StreamHandler(sys.stdout)
+            console_handler.setFormatter(formatter)
+            self.logger.addHandler(console_handler)
 
-    def _get_level(self, level: str):
+    def _get_level(self, level: str) -> int:
         return {
             "DEBUG": logging.DEBUG,
             "INFO": logging.INFO,
@@ -25,5 +28,5 @@ class Logger:
             "CRITICAL": logging.CRITICAL,
         }.get(level.upper(), logging.INFO)
 
-    def get(self):
+    def get(self) -> logging.Logger:
         return self.logger
