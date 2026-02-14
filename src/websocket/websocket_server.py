@@ -58,6 +58,16 @@ class WebSocketServer:
         if self.server:
             self.server.close()
             await self.server.wait_closed()
+
+            # Cancel all pending tasks except the current one
+            tasks = [t for t in asyncio.all_tasks(self.loop) if not t.done()]
+            for task in tasks:
+                task.cancel()
+
+            # Wait for all tasks to complete cancellation
+            if tasks:
+                await asyncio.gather(*tasks, return_exceptions=True)
+
             self.logger.info("WebSocket server stopped")
 
     def start(self) -> None:
@@ -66,10 +76,30 @@ class WebSocketServer:
         self.loop = asyncio.new_event_loop()
         asyncio.set_event_loop(self.loop)
 
-        # Start server and run until stopped
-        self.loop.run_until_complete(self.start_server())
-        self.loop.run_forever()
+        try:
+            # Start server and run until stopped
+            self.loop.run_until_complete(self.start_server())
+            self.loop.run_forever()
+        finally:
+            # Clean up any remaining tasks
+            try:
+                # Cancel all remaining tasks
+                pending = asyncio.all_tasks(self.loop)
+                for task in pending:
+                    task.cancel()
+
+                # Wait for task cancellation to complete
+                if pending:
+                    self.loop.run_until_complete(
+                        asyncio.gather(*pending, return_exceptions=True)
+                    )
+            except Exception as e:
+                self.logger.debug(f"Error during loop cleanup: {e}")
+            finally:
+                self.loop.close()
 
     def stop(self) -> None:
-        if self.loop:
+        if self.loop and self.loop.is_running():
+            # Schedule the stop_server coroutine and then stop the loop
+            asyncio.run_coroutine_threadsafe(self.stop_server(), self.loop)
             self.loop.call_soon_threadsafe(self.loop.stop)

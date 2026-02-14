@@ -79,6 +79,8 @@ class Application:
         cap.set(cv2.CAP_PROP_FRAME_WIDTH, self.config.CAMERA_WIDTH)
         cap.set(cv2.CAP_PROP_FRAME_HEIGHT, self.config.CAMERA_HEIGHT)
         cap.set(cv2.CAP_PROP_FPS, self.config.TARGET_FPS)
+        # Set buffer size to 1 to prevent circular buffer overrun
+        cap.set(cv2.CAP_PROP_BUFFERSIZE, 1)
 
         cv2.namedWindow(self.config.WINDOW_HANDLE, cv2.WINDOW_NORMAL)
         cv2.resizeWindow(
@@ -211,5 +213,13 @@ class Application:
             # Cleanup resources
             cap.release()
             cv2.destroyAllWindows()
+
+            # Give the websocket server time to finish any pending broadcasts
+            time.sleep(0.5)
             self.ws_server.stop()
+
+            # Wait for websocket thread to finish
+            if self.ws_thread and self.ws_thread.is_alive():
+                self.ws_thread.join(timeout=2.0)
+
             self.logger.info("Application terminated gracefully.")
