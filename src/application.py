@@ -31,9 +31,9 @@ class Application:
 
                     if not success:
                         self.logger.warning(
-                            "Failed to read frame from camera. Ending application loop."
+                            "Failed to read frame from camera. Skipping to next frame..."
                         )
-                        break
+                        continue
 
                     # Flip the frame, because MediaPipe's hand tracking is designed for selfie mode
                     frame = cv2.flip(frame, 1)
@@ -57,6 +57,9 @@ class Application:
                         break
 
                     frame_count += 1
+
+        except Exception as e:
+            self.logger.error(f"An unexpected error occurred: {e}")
 
         finally:
             cap.release()
