@@ -35,6 +35,11 @@ class Application:
                         )
                         continue
 
+                    # Skip frames for performance
+                    if frame_count % self.config.CAMERA_FRAME_SKIP != 0:
+                        frame_count += 1
+                        continue
+
                     # Flip the frame, because MediaPipe's hand tracking is designed for selfie mode
                     frame = cv2.flip(frame, 1)
 

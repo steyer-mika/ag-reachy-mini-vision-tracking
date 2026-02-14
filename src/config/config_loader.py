@@ -54,6 +54,10 @@ class Config:
     def CAMERA_HEIGHT(self) -> int:
         return self._get("camera", "height", default=720)
 
+    @property
+    def CAMERA_FRAME_SKIP(self) -> int:
+        return self._get("camera", "frame_skip", default=2)
+
     def reload(self):
         """Reload configuration from file."""
         self._load_config()
