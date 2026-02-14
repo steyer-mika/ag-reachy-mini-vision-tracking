@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Reachy Mini Client | Vision & Tracking</title>
+
+    <link rel="stylesheet" href="styles.css" />
+    <script src="app.js" defer></script>
+  </head>
+  <body>
+    <header>
+      <h1>Reachy Mini Client</h1>
+      <p>Vision & Tracking Dashboard</p>
+
+      <div class="status-container">
+        <span id="status-icon" class="disconnected"></span>
+        <span id="status-text">Disconnected</span>
+      </div>
+    </header>
+
+    <main>
+      <section class="finger-display">
+        <div id="emoji" class="emoji-display">✋</div>
+        <div id="finger-count" class="finger-count">0</div>
+        <div class="finger-label">Total Fingers Detected</div>
+      </section>
+
+      <section class="hands-grid">
+        <div class="hand-card" id="left-hand">
+          <h3>Left Hand</h3>
+          <div class="count" id="left-count">-</div>
+        </div>
+        <div class="hand-card" id="right-hand">
+          <h3>Right Hand</h3>
+          <div class="count" id="right-count">-</div>
+        </div>
+      </section>
+
+      <section class="info-section">
+        <div class="info-row">
+          <span class="info-label">Hands Detected:</span>
+          <span class="info-value" id="hands-detected">0</span>
+        </div>
+        <div class="info-row">
+          <span class="info-label">Last Update:</span>
+          <span class="info-value" id="last-update">Never</span>
+        </div>
+      </section>
+    </main>
+  </body>
+</html>

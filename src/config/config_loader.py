@@ -58,6 +58,15 @@ class Config:
     def TARGET_FPS(self) -> int:
         return self._get("camera", "target_fps", default=30)
 
+    # WebSocket settings
+    @property
+    def WEBSOCKET_PORT(self) -> int:
+        return self._get("websocket", "port", default=8765)
+
+    @property
+    def WEBSOCKET_HOST(self) -> str:
+        return self._get("websocket", "host", default="0.0.0.0")
+
     def reload(self):
         """Reload configuration from file."""
         self._load_config()

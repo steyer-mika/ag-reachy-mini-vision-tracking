@@ -7,3 +7,7 @@ camera:
   width: 1280
   height: 720
   target_fps: 30
+
+websocket:
+  port: 8765
+  host: "0.0.0.0"

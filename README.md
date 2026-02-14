@@ -46,6 +46,8 @@ C:\Users\steyer-mika\.local\bin\uv.exe
   - [ ] Motion smoothing & safety limits
 
 - UI
+  - [x] Client UI with HTML and Websocket
+  - [ ] Throttle Events (Stabilize)
   - [ ] Manual control interface
   - [ ] Toggle Manual / Auto mode
   - [ ] Display camera + debug info

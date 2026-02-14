@@ -7,6 +7,7 @@ logger = Logger(__name__).get()
 
 def main():
     logger.info("Starting Reachy Mini | Vision & Tracking Application")
+    logger.info("With WebSocket Server and Robot Integration")
 
     config = get_config()
 
@@ -20,6 +21,8 @@ def main():
         return
 
     logger.info("Successfully loaded configuration. Starting application...")
+    logger.info(f"WebSocket server will start on port {config.WEBSOCKET_PORT}")
+    logger.info("Open client/index.html in your browser to view the dashboard")
 
     app = Application(config)
 
