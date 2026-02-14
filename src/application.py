@@ -1,3 +1,4 @@
+import time
 import cv2
 
 from config.config_loader import Config
@@ -14,6 +15,7 @@ class Application:
         cap = cv2.VideoCapture(self.config.CAMERA_INDEX)
         cap.set(cv2.CAP_PROP_FRAME_WIDTH, self.config.CAMERA_WIDTH)
         cap.set(cv2.CAP_PROP_FRAME_HEIGHT, self.config.CAMERA_HEIGHT)
+        cap.set(cv2.CAP_PROP_FPS, self.config.TARGET_FPS)
 
         cv2.namedWindow(self.config.WINDOW_HANDLE, cv2.WINDOW_NORMAL)
         cv2.resizeWindow(
@@ -23,21 +25,23 @@ class Application:
         )
 
         frame_count = 0
+        frame_duration = 1.0 / self.config.TARGET_FPS
+
+        fps = 0
+        fps_counter = 0
+        fps_timer = time.perf_counter()
 
         try:
             with HandTracker(self.config) as tracker:
                 while cap.isOpened():
+                    loop_start = time.perf_counter()
+
                     success, frame = cap.read()
 
                     if not success:
                         self.logger.warning(
                             "Failed to read frame from camera. Skipping to next frame..."
                         )
-                        continue
-
-                    # Skip frames for performance
-                    if frame_count % self.config.CAMERA_FRAME_SKIP != 0:
-                        frame_count += 1
                         continue
 
                     # Flip the frame, because MediaPipe's hand tracking is designed for selfie mode
@@ -51,15 +55,38 @@ class Application:
                         frame, result, finger_count
                     )
 
-                    # Add status info
+                    fps_counter += 1
+                    current_time = time.perf_counter()
+
+                    if current_time - fps_timer >= 1.0:
+                        fps = fps_counter
+                        fps_counter = 0
+                        fps_timer = current_time
+
+                    cv2.putText(
+                        annotated_frame,
+                        f"FPS: {fps}",
+                        (10, 30),
+                        cv2.FONT_HERSHEY_SIMPLEX,
+                        1,
+                        (0, 255, 0),
+                        2,
+                        cv2.LINE_AA,
+                    )
+
                     cv2.imshow(self.config.WINDOW_HANDLE, annotated_frame)
 
-                    # Exit on 'q' (Note: Only works if the camera window is focused - not the terminal)
+                    # Exit on 'q'
                     if cv2.waitKey(1) & 0xFF == ord("q"):
                         self.logger.info(
                             "Exit key 'q' pressed. Exiting application loop."
                         )
                         break
+
+                    elapsed = time.perf_counter() - loop_start
+                    sleep_time = frame_duration - elapsed
+                    if sleep_time > 0:
+                        time.sleep(sleep_time)
 
                     frame_count += 1
 
