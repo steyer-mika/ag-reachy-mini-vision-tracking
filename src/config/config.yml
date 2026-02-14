@@ -2,6 +2,7 @@ model:
   path: ./models/hand_landmarker.task
 
 camera:
+  window_handle: "Reachy Mini | Vision and Tracking"
   index: 0
   width: 1280
   height: 720

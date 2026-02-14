@@ -37,6 +37,12 @@ class Config:
 
     # Camera settings
     @property
+    def WINDOW_HANDLE(self) -> str:
+        return self._get(
+            "camera", "window_handle", default="Reachy Mini | Vision and Tracking"
+        )
+
+    @property
     def CAMERA_INDEX(self) -> int:
         return self._get("camera", "index", default=0)
 
@@ -57,7 +63,7 @@ class Config:
 _config_instance = None
 
 
-def get_config(config_path: str = "config/config.yml") -> Config:
+def get_config(config_path: str = "./src/config/config.yml") -> Config:
     global _config_instance
     if _config_instance is None:
         _config_instance = Config(config_path)

@@ -13,11 +13,14 @@ class Application:
         cap.set(cv2.CAP_PROP_FRAME_WIDTH, self.config.CAMERA_WIDTH)
         cap.set(cv2.CAP_PROP_FRAME_HEIGHT, self.config.CAMERA_HEIGHT)
 
+        cv2.namedWindow(self.config.WINDOW_HANDLE, cv2.WINDOW_NORMAL)
+        cv2.resizeWindow(
+            self.config.WINDOW_HANDLE,
+            self.config.CAMERA_WIDTH,
+            self.config.CAMERA_HEIGHT,
+        )
+
         print("=" * 60)
-        print("HAND-CONTROLLED ROBOT SYSTEM")
-        print("=" * 60)
-        print("Show 0-10 fingers to trigger robot gestures")
-        print("Hold the gesture steady for activation")
         print("Press 'q' to quit")
         print("=" * 60)
 
@@ -32,6 +35,7 @@ class Application:
                         print("Failed to read from camera")
                         break
 
+                    # Flip the frame, because MediaPipe's hand tracking is designed for selfie mode
                     frame = cv2.flip(frame, 1)
 
                     timestamp_ms = int(cap.get(cv2.CAP_PROP_POS_MSEC))
@@ -43,9 +47,9 @@ class Application:
                     )
 
                     # Add status info
-                    cv2.imshow("Hand-Controlled Robot", annotated_frame)
+                    cv2.imshow(self.config.WINDOW_HANDLE, annotated_frame)
 
-                    # Exit on 'q'
+                    # Exit on 'q' (Note: Only works if the camera window is focused - not the terminal)
                     if cv2.waitKey(1) & 0xFF == ord("q"):
                         break
 
