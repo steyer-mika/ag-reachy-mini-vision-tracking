@@ -12,7 +12,11 @@ def main():
 
     if not config.MODEL_PATH.exists():
         logger.error(f"Model file not found at {config.MODEL_PATH}")
-        logger.error("Please download the hand landmarker model from MediaPipe")
+        logger.error("Please download the hand landmarker model from:")
+        logger.error(
+            "https://developers.google.com/mediapipe/solutions/vision/hand_landmarker"
+        )
+        logger.error("Place it in the models/ directory")
         return
 
     logger.info("Successfully loaded configuration. Starting application...")
