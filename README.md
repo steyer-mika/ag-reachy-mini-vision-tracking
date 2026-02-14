@@ -26,14 +26,31 @@ C:\Users\steyer-mika\.local\bin\uv.exe
 
 ## Improvements and Features
 
-- [ ] Add Person Tracking
-- [ ] Add Robot Controller
-- [ ] Add Gesture Controller
-- [ ] Add Multi Person Handing
-- [ ] Add UI to Control Robot
-- [x] Add Logger
-- [x] Add fixed fps
-- [ ] Improve Memory Management & Performance (Reuse Frame Buffer)
-- [ ] Add Renderer to outsource screen drawing
-- [ ] Add more Comments to Explain Concepts and Logic
-- [ ] Improve Finger Counter
+- Vision
+  - [x] Hand detection
+  - [x] Finger counting (0–10)
+  - [ ] Improve finger counter accuracy & smoothing
+
+- Person Tracking
+  - [ ] Person detection
+  - [ ] Autonomous tracking
+  - [ ] Target selection
+  - [ ] Lost-target recovery
+  - [ ] Tracking smoothing (PID / filter)
+  - [ ] Multi-person handling
+
+- Robot Control
+  - [ ] Base movement control
+  - [ ] Head pan/tilt tracking
+  - [ ] Gesture reactions based on finger count
+  - [ ] Motion smoothing & safety limits
+
+- UI
+  - [ ] Manual control interface
+  - [ ] Toggle Manual / Auto mode
+  - [ ] Display camera + debug info
+
+- System Improvements
+  - [ ] Improve memory management (reuse frame buffer)
+  - [ ] Separate renderer from logic
+  - [ ] Add better code documentation
