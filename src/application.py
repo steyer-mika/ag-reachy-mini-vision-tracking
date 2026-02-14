@@ -63,10 +63,12 @@ class Application:
                         fps_counter = 0
                         fps_timer = current_time
 
+                    text = f"FPS: {fps}"
+                    text_size = cv2.getTextSize(text, cv2.FONT_HERSHEY_SIMPLEX, 1, 2)[0]
                     cv2.putText(
                         annotated_frame,
-                        f"FPS: {fps}",
-                        (10, 30),
+                        text,
+                        (self.config.CAMERA_WIDTH - text_size[0] - 10, 30),
                         cv2.FONT_HERSHEY_SIMPLEX,
                         1,
                         (0, 255, 0),
