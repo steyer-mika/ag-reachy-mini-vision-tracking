@@ -1,18 +1,31 @@
 from application import Application
 from config.config_loader import get_config
+from logger import Logger
+
+logger = Logger(__name__).get()
 
 
 def main():
+    logger.info("Starting Reachy Mini | Vision & Tracking Application")
+
     config = get_config()
 
     if not config.MODEL_PATH.exists():
-        print(f"Error: Model file not found at {config.MODEL_PATH}")
-        print("Please download the hand landmarker model from MediaPipe")
+        logger.error(f"Model file not found at {config.MODEL_PATH}")
+        logger.error("Please download the hand landmarker model from MediaPipe")
         return
+
+    logger.info("Successfully loaded configuration. Starting application...")
 
     app = Application(config)
 
+    logger.info(
+        "Entering main application loop. Press 'q' in the camera window to exit."
+    )
+
     app.run()
+
+    logger.info("Application has exited. Cleaning up resources and shutting down.")
 
 
 if __name__ == "__main__":
