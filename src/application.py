@@ -1,5 +1,4 @@
 import cv2
-import time
 
 from config.config_loader import Config
 from hand_tracker import HandTracker
@@ -21,14 +20,14 @@ class Application:
         print("Hold the gesture steady for activation")
         print("Press 'q' to quit")
         print("=" * 60)
-        
+
         frame_count = 0
 
         try:
-            with HandTracker(self.config.MODEL_PATH) as tracker:
+            with HandTracker(self.config) as tracker:
                 while cap.isOpened():
                     success, frame = cap.read()
-                    
+
                     if not success:
                         print("Failed to read from camera")
                         break
@@ -37,16 +36,15 @@ class Application:
 
                     timestamp_ms = int(cap.get(cv2.CAP_PROP_POS_MSEC))
                     finger_count, result = tracker.detect(frame, timestamp_ms)
-                        
-                    # Check if gesture should be triggered
-                    current_time = time.time()
-                        
+
                     # Draw visualization
-                    annotated_frame = tracker.draw_landmarks(frame, result, finger_count)
-                            
+                    annotated_frame = tracker.draw_landmarks(
+                        frame, result, finger_count
+                    )
+
                     # Add status info
                     cv2.imshow("Hand-Controlled Robot", annotated_frame)
-                        
+
                     # Exit on 'q'
                     if cv2.waitKey(1) & 0xFF == ord("q"):
                         break

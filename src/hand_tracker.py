@@ -7,27 +7,28 @@ import numpy as np
 from mediapipe.tasks import python
 from mediapipe.tasks.python import vision
 
+from config.config_loader import Config
+
 
 class HandTracker:
-    def __init__(self, model_path: Path, num_hands: int = 2):
-        self.model_path = model_path
-        self.num_hands = num_hands
+    def __init__(self, config: Config):
+        self.config = config
         self.landmarker = None
-        
+
     def __enter__(self):
-        base_options = python.BaseOptions(model_asset_path=str(self.model_path))
+        base_options = python.BaseOptions(model_asset_path=str(self.config.MODEL_PATH))
         options = vision.HandLandmarkerOptions(
             base_options=base_options,
             running_mode=vision.RunningMode.VIDEO,
-            num_hands=self.num_hands,
+            num_hands=2,  # TODO: Support configurable number of hands in the future
         )
         self.landmarker = vision.HandLandmarker.create_from_options(options)
         return self
-        
-    def __exit__(self, exc_type, exc_val, exc_tb):
+
+    def __exit__(self, _exc_type, _exc_val, _exc_tb):
         if self.landmarker:
             self.landmarker.close()
-    
+
     @staticmethod
     def count_fingers(hand_landmarks, handedness: str) -> int:
         finger_tips = [4, 8, 12, 16, 20]
@@ -48,20 +49,22 @@ class HandTracker:
                 fingers_up += 1
 
         return fingers_up
-    
-    def detect(self, frame: np.ndarray, timestamp_ms: int) -> Tuple[Optional[int], object]:
+
+    def detect(
+        self, frame: np.ndarray, timestamp_ms: int
+    ) -> Tuple[Optional[int], object]:
         if self.landmarker is None:
             raise RuntimeError("HandTracker must be used within a context manager")
 
         # Convert to RGB
         rgb_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-        
+
         # Create MediaPipe Image
         mp_image = mp.Image(image_format=mp.ImageFormat.SRGB, data=rgb_frame)
-        
+
         # Detect hands
         result = self.landmarker.detect_for_video(mp_image, timestamp_ms)
-        
+
         # Count total fingers
         total_fingers = 0
         if result.hand_landmarks:
@@ -69,11 +72,13 @@ class HandTracker:
                 handedness = result.handedness[idx][0].category_name
                 finger_count = self.count_fingers(hand_landmarks, handedness)
                 total_fingers += finger_count
-        
+
         return total_fingers, result
-    
+
     @staticmethod
-    def draw_landmarks(frame: np.ndarray, detection_result, total_fingers: int | None = 0) -> np.ndarray:
+    def draw_landmarks(
+        frame: np.ndarray, detection_result, total_fingers: int | None = 0
+    ) -> np.ndarray:
         h, w, _ = frame.shape
 
         if detection_result.hand_landmarks:
@@ -86,12 +91,29 @@ class HandTracker:
 
                 # Draw connections
                 connections = [
-                    (0, 1), (1, 2), (2, 3), (3, 4),  # Thumb
-                    (0, 5), (5, 6), (6, 7), (7, 8),  # Index
-                    (0, 9), (9, 10), (10, 11), (11, 12),  # Middle
-                    (0, 13), (13, 14), (14, 15), (15, 16),  # Ring
-                    (0, 17), (17, 18), (18, 19), (19, 20),  # Pinky
-                    (5, 9), (9, 13), (13, 17),  # Palm
+                    (0, 1),
+                    (1, 2),
+                    (2, 3),
+                    (3, 4),  # Thumb
+                    (0, 5),
+                    (5, 6),
+                    (6, 7),
+                    (7, 8),  # Index
+                    (0, 9),
+                    (9, 10),
+                    (10, 11),
+                    (11, 12),  # Middle
+                    (0, 13),
+                    (13, 14),
+                    (14, 15),
+                    (15, 16),  # Ring
+                    (0, 17),
+                    (17, 18),
+                    (18, 19),
+                    (19, 20),  # Pinky
+                    (5, 9),
+                    (9, 13),
+                    (13, 17),  # Palm
                 ]
 
                 for start_idx, end_idx in connections:

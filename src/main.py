@@ -1,6 +1,7 @@
 from application import Application
 from config.config_loader import get_config
 
+
 def main():
     config = get_config()
 
@@ -12,6 +13,7 @@ def main():
     app = Application(config)
 
     app.run()
-    
+
+
 if __name__ == "__main__":
     main()
