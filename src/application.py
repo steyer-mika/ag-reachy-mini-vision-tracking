@@ -2,7 +2,7 @@ import cv2
 
 from config.config_loader import Config
 from hand_tracker import HandTracker
-from logger import Logger
+from lib.logger import Logger
 
 
 class Application:

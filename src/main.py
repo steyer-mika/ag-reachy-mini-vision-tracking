@@ -1,6 +1,6 @@
 from application import Application
 from config.config_loader import get_config
-from logger import Logger
+from lib.logger import Logger
 
 logger = Logger(__name__).get()
 
