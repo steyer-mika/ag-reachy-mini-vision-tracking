@@ -2,7 +2,7 @@ import time
 import cv2
 
 from config.config_loader import Config
-from hand_tracker import HandTracker
+from tracking.hand_tracker import HandTracker
 from lib.logger import Logger
 
 
