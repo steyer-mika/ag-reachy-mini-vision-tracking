@@ -1,6 +1,7 @@
 from pathlib import Path
 from typing import Any, Dict, TypeVar
 import yaml
+import os
 
 T = TypeVar("T")
 
@@ -32,12 +33,11 @@ class Config:
     # MediaPipe Model
     @property
     def MODEL_PATH(self) -> Path:
-        return Path(
-            self._get(
-                "mediapipe",
-                "model_path",
-                default=str(Path.home() / "models" / "hand_landmarker.task"),
-            )
+        return (
+            Path(os.getcwd())
+            / "ag_reachy_mini_vision_tracking"
+            / "models"
+            / "hand_landmarker.task"
         )
 
     @property
