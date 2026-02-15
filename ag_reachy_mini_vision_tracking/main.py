@@ -14,6 +14,7 @@ from pathlib import Path
 from .config.config_loader import get_config
 from .vision.video_processor import VideoProcessor
 from .app_state import AppState
+from .robot.controller import RobotController
 
 
 class AgReachyMiniVisionTracking(ReachyMiniApp):
@@ -33,6 +34,7 @@ class AgReachyMiniVisionTracking(ReachyMiniApp):
 
         # Video processor
         self.video_processor: VideoProcessor | None = None
+        self.robot_controller: RobotController | None = None
 
     def _on_finger_count_update(self, count: int) -> None:
         self.shared_state.set_finger_count(count)
@@ -61,6 +63,9 @@ class AgReachyMiniVisionTracking(ReachyMiniApp):
     def run(self, reachy_mini: ReachyMini, stop_event: threading.Event):
         self._setup_api_endpoints()
 
+        start_time = time.time()
+        self.robot_controller = RobotController(self.config, start_time)
+
         self.video_processor = VideoProcessor(
             self.config, on_finger_count_update=self._on_finger_count_update
         )
@@ -72,9 +77,14 @@ class AgReachyMiniVisionTracking(ReachyMiniApp):
                 # Get current state
                 finger_count = self.shared_state.get_finger_count()
                 antennas_enabled = self.shared_state.get_antennas_enabled()
+                elapsed_time = self.robot_controller.get_elapsed_time()
 
-                print(
-                    f"Finger Count: {finger_count}, Antennas Enabled: {antennas_enabled}"
+                head_pose = self.robot_controller.calculate_head_pose(
+                    finger_count, elapsed_time
+                )
+
+                antennas = self.robot_controller.calculate_antenna_positions(
+                    finger_count, elapsed_time, antennas_enabled
                 )
 
                 # Handle sound play request
@@ -82,6 +92,11 @@ class AgReachyMiniVisionTracking(ReachyMiniApp):
                     print("Playing sound...")
                     reachy_mini.media.play_sound("wake_up.wav")
                     self.shared_state.clear_sound_play_request()
+
+                reachy_mini.set_target(
+                    head=head_pose,
+                    antennas=antennas,
+                )
 
                 # Sleep for control loop rate
                 time.sleep(self.config.CONTROL_LOOP_RATE)
