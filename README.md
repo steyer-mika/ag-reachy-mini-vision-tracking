@@ -22,6 +22,33 @@
 - Examples `https://github.com/pollen-robotics/reachy_mini/tree/main/examples` && `https://github.com/Seeed-Projects/reachy-mini-starter`
 - App CLI `https://huggingface.co/blog/pollen-robotics/make-and-publish-your-reachy-mini-apps`
 
+## TODOs
+
+- Vision
+  - [x] Hand detection
+  - [x] Finger counting (0–10)
+  - [ ] Improve finger counter accuracy & smoothing
+  - [ ] Fix Left/Right Hand mixup
+
+- Person Tracking
+  - [ ] Person detection
+  - [ ] Autonomous tracking
+  - [ ] Target selection
+  - [ ] Lost-target recovery
+  - [ ] Tracking smoothing (PID / filter)
+  - [ ] Multi-person handling
+
+  - Robot Control
+  - [ ] Base movement control
+  - [ ] Head pan/tilt tracking
+  - [x] Gesture reactions based on finger count
+  - [ ] Motion smoothing & safety limits
+
+- UI
+  - [x] Client UI with HTML and Websocket
+  - [x] Manual control interface
+  - [ ] Toggle Manual / Auto mode
+
 ## Metadata
 
 ---
