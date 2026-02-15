@@ -13,7 +13,7 @@
 ## Run Program
 
 - `reachy-mini-daemon --sim`
-- `python ag_reachy_mini_vision_tracking/main.py`
+- `python -m ag_reachy_mini_vision_tracking.src.main`
 
 ## References
 
