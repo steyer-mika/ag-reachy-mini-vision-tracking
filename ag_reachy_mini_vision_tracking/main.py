@@ -1,4 +1,11 @@
 import threading
+import os
+import warnings
+
+# Suppress TensorFlow/MediaPipe warnings
+os.environ["TF_CPP_MIN_LOG_LEVEL"] = "2"  # Suppress TensorFlow warnings
+warnings.filterwarnings("ignore", category=UserWarning)
+
 from reachy_mini import ReachyMini, ReachyMiniApp
 from reachy_mini.utils import create_head_pose
 import numpy as np
@@ -79,9 +86,12 @@ class AgReachyMiniVisionTracking(ReachyMiniApp):
         try:
             for cam_index in self.config.CAMERA_INDICES:
                 cap = cv2.VideoCapture(cam_index)
-                cap.set(cv2.CAP_PROP_FRAME_WIDTH, self.config.CAMERA_WIDTH)
-                cap.set(cv2.CAP_PROP_FRAME_HEIGHT, self.config.CAMERA_HEIGHT)
                 if cap.isOpened():
+                    # Set camera properties to reduce buffer issues
+                    cap.set(cv2.CAP_PROP_FRAME_WIDTH, self.config.CAMERA_WIDTH)
+                    cap.set(cv2.CAP_PROP_FRAME_HEIGHT, self.config.CAMERA_HEIGHT)
+                    cap.set(cv2.CAP_PROP_BUFFERSIZE, 1)  # Reduce buffer to minimum
+                    cap.set(cv2.CAP_PROP_FPS, self.config.TARGET_FPS)
                     print(f"Camera opened successfully on index {cam_index}")
                     break
                 cap.release()
@@ -111,6 +121,9 @@ class AgReachyMiniVisionTracking(ReachyMiniApp):
                 base_options=base_options,
                 running_mode=vision.RunningMode.VIDEO,
                 num_hands=self.config.MAX_HANDS,
+                min_hand_detection_confidence=self.config.MIN_DETECTION_CONFIDENCE,
+                min_hand_presence_confidence=self.config.MIN_TRACKING_CONFIDENCE,
+                min_tracking_confidence=self.config.MIN_TRACKING_CONFIDENCE,
             )
             self.landmarker = vision.HandLandmarker.create_from_options(options)
             print("MediaPipe Hand Landmarker initialized")
@@ -121,7 +134,10 @@ class AgReachyMiniVisionTracking(ReachyMiniApp):
             return
 
         while not stop_event.is_set():
-            ret, frame = cap.read()
+            # Grab latest frame and discard buffered frames to prevent lag
+            cap.grab()  # Discard buffered frames
+            ret, frame = cap.retrieve()
+
             if not ret:
                 time.sleep(1 / self.config.TARGET_FPS)
                 continue
