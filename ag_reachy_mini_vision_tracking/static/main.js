@@ -1,6 +1,64 @@
 let antennasEnabled = true;
 let fingerCount = 0;
-let pollInterval = null;
+let ws = null;
+let reconnectTimeout = null;
+
+function connectWebSocket() {
+  // Determine WebSocket URL based on current location
+  const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+  const wsUrl = `${protocol}//${window.location.host}/ws`;
+
+  ws = new WebSocket(wsUrl);
+
+  ws.onopen = () => {
+    console.log('WebSocket connected');
+    const cameraStatus = document.getElementById('camera-status');
+    cameraStatus.textContent = 'active';
+    cameraStatus.style.color = '#22c55e';
+  };
+
+  ws.onmessage = (event) => {
+    try {
+      const data = JSON.parse(event.data);
+
+      if (data.type === 'finger_count') {
+        fingerCount = data.finger_count;
+        updateFingerDisplay();
+      }
+    } catch (e) {
+      console.error('Error parsing WebSocket message:', e);
+    }
+  };
+
+  ws.onerror = (error) => {
+    console.error('WebSocket error:', error);
+    const cameraStatus = document.getElementById('camera-status');
+    cameraStatus.textContent = 'error';
+    cameraStatus.style.color = '#ef4444';
+  };
+
+  ws.onclose = () => {
+    console.log('WebSocket disconnected');
+    const cameraStatus = document.getElementById('camera-status');
+    cameraStatus.textContent = 'reconnecting...';
+    cameraStatus.style.color = '#f59e0b';
+
+    // Attempt to reconnect after 2 seconds
+    reconnectTimeout = setTimeout(connectWebSocket, 2000);
+  };
+}
+
+function disconnectWebSocket() {
+  if (reconnectTimeout) {
+    clearTimeout(reconnectTimeout);
+    reconnectTimeout = null;
+  }
+
+  if (ws) {
+    ws.close();
+    ws = null;
+  }
+}
 
 async function updateAntennasState(enabled) {
   try {
@@ -23,27 +81,6 @@ async function playSound() {
     await fetch('/play_sound', { method: 'POST' });
   } catch (e) {
     console.error('Error triggering sound:', e);
-  }
-}
-
-async function fetchFingerCount() {
-  try {
-    const resp = await fetch('/finger_count');
-    const data = await resp.json();
-    fingerCount = data.finger_count;
-    updateFingerDisplay();
-
-    // Update camera status
-    const cameraStatus = document.getElementById('camera-status');
-    if (cameraStatus.textContent === 'initializing...') {
-      cameraStatus.textContent = 'active';
-      cameraStatus.style.color = '#22c55e';
-    }
-  } catch (e) {
-    console.error('Error fetching finger count:', e);
-    const cameraStatus = document.getElementById('camera-status');
-    cameraStatus.textContent = 'error';
-    cameraStatus.style.color = '#ef4444';
   }
 }
 
@@ -102,36 +139,20 @@ document.getElementById('sound-btn').addEventListener('click', () => {
   playSound();
 });
 
-// Start polling for finger count
-function startPolling() {
-  // Initial fetch
-  fetchFingerCount();
-
-  // Poll every 100ms for smooth updates
-  pollInterval = setInterval(fetchFingerCount, 100);
-}
-
-function stopPolling() {
-  if (pollInterval) {
-    clearInterval(pollInterval);
-    pollInterval = null;
-  }
-}
-
 // Handle page visibility changes
 document.addEventListener('visibilitychange', () => {
   if (document.hidden) {
-    stopPolling();
+    disconnectWebSocket();
   } else {
-    startPolling();
+    connectWebSocket();
   }
 });
 
 // Initialize
 updateUI();
-startPolling();
+connectWebSocket();
 
 // Cleanup on page unload
 window.addEventListener('beforeunload', () => {
-  stopPolling();
+  disconnectWebSocket();
 });

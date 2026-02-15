@@ -1,6 +1,7 @@
 import threading
 import os
 import warnings
+import asyncio
 
 # Suppress TensorFlow/MediaPipe warnings
 os.environ["TF_CPP_MIN_LOG_LEVEL"] = "2"  # Suppress TensorFlow warnings
@@ -8,13 +9,14 @@ warnings.filterwarnings("ignore", category=UserWarning)
 
 from reachy_mini import ReachyMini, ReachyMiniApp
 import time
-from pydantic import BaseModel
 from pathlib import Path
 
 from .config.config_loader import get_config
 from .vision.video_processor import VideoProcessor
 from .app_state import AppState
 from .robot.controller import RobotController
+from .api.websocket.connection_manager import ConnectionManager
+from .api.endpoints import setup_api_endpoints
 
 
 class AgReachyMiniVisionTracking(ReachyMiniApp):
@@ -32,33 +34,36 @@ class AgReachyMiniVisionTracking(ReachyMiniApp):
         # Shared state
         self.shared_state = AppState()
 
+        # WebSocket connection manager
+        self.connection_manager = ConnectionManager()
+        self.event_loop_ref = [None]  # Mutable reference for event loop
+
         # Video processor
         self.video_processor: VideoProcessor | None = None
         self.robot_controller: RobotController | None = None
 
     def _on_finger_count_update(self, count: int) -> None:
         self.shared_state.set_finger_count(count)
+        # Broadcast to all connected WebSocket clients from a different thread
+        event_loop = self.event_loop_ref[0]
+        if event_loop and not event_loop.is_closed():
+            asyncio.run_coroutine_threadsafe(
+                self.connection_manager.broadcast(
+                    {"type": "finger_count", "finger_count": count}
+                ),
+                event_loop,
+            )
 
     def _setup_api_endpoints(self) -> None:
         if not self.settings_app:
             return None
 
-        class AntennaState(BaseModel):
-            enabled: bool
-
-        @self.settings_app.post("/antennas")
-        def update_antennas_state(state: AntennaState):
-            self.shared_state.set_antennas_enabled(state.enabled)
-            return {"antennas_enabled": state.enabled}
-
-        @self.settings_app.post("/play_sound")
-        def request_sound_play():
-            self.shared_state.request_sound_play()
-            return {"status": "requested"}
-
-        @self.settings_app.get("/finger_count")
-        def get_finger_count():
-            return {"finger_count": self.shared_state.get_finger_count()}
+        setup_api_endpoints(
+            self.settings_app,
+            self.shared_state,
+            self.connection_manager,
+            self.event_loop_ref,
+        )
 
     def run(self, reachy_mini: ReachyMini, stop_event: threading.Event):
         self._setup_api_endpoints()
