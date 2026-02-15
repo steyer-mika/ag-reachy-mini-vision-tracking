@@ -2,41 +2,100 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <title>Reachy Mini - Finger Counter</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Reachy Mini - Vision & Tracking</title>
     <link rel="stylesheet" href="/static/style.css" />
   </head>
-
   <body>
-    <h1>Reachy Mini - Finger Counter</h1>
-
-    <div id="finger-display">
-      <div class="finger-count-wrapper">
-        <div class="finger-emoji">✋</div>
-        <div class="finger-count">0</div>
-        <div class="finger-label">Fingers Detected</div>
+    <header>
+      <div class="header-content">
+        <h1>Reachy Mini Vision Tracking</h1>
+        <p>Finger Counter & Robot Control</p>
       </div>
-    </div>
-
-    <div id="controls">
-      <label style="display: flex; align-items: center; gap: 8px">
-        <input type="checkbox" id="antenna-checkbox" checked />
-        Antennas
-      </label>
-
-      <button id="sound-btn">Play Sound</button>
-    </div>
-
-    <div id="status">
-      <div class="status-item">
-        <span class="status-label">Antennas:</span>
-        <span id="antenna-status">running</span>
+      <div class="status-container">
+        <span id="status-icon" class="disconnected"></span>
+        <span id="status-text">Disconnected</span>
       </div>
-      <div class="status-item">
-        <span class="status-label">Camera:</span>
-        <span id="camera-status">initializing...</span>
+    </header>
+
+    <main>
+      <!-- Left Column: Finger Display -->
+      <section class="finger-display">
+        <div class="emoji-display" id="emoji">✋</div>
+        <div class="finger-count" id="finger-count">0</div>
+        <div class="finger-label">Total Fingers Detected</div>
+        
+        <!-- Individual Hand Display -->
+        <div class="hands-grid">
+          <div class="hand-card" id="left-hand">
+            <h3>Left Hand</h3>
+            <div class="count" id="left-count">-</div>
+          </div>
+          <div class="hand-card" id="right-hand">
+            <h3>Right Hand</h3>
+            <div class="count" id="right-count">-</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Right Column: Robot Controls -->
+      <section class="control-section">
+        <h3>Robot Controls</h3>
+        <p class="control-hint">Use WASD or Arrow keys</p>
+        
+        <div class="control-grid">
+          <div class="control-row">
+            <button class="control-btn" id="btn-up" data-direction="up">
+              <span class="arrow">▲</span>
+              <span class="key-hint">W / ↑</span>
+            </button>
+          </div>
+          <div class="control-row">
+            <button class="control-btn" id="btn-left" data-direction="left">
+              <span class="arrow">◄</span>
+              <span class="key-hint">A / ←</span>
+            </button>
+            <button class="control-btn" id="btn-down" data-direction="down">
+              <span class="arrow">▼</span>
+              <span class="key-hint">S / ↓</span>
+            </button>
+            <button class="control-btn" id="btn-right" data-direction="right">
+              <span class="arrow">►</span>
+              <span class="key-hint">D / →</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Additional Controls -->
+        <div class="additional-controls">
+          <label class="checkbox-control">
+            <input type="checkbox" id="antenna-checkbox" checked />
+            <span>Enable Antennas</span>
+          </label>
+          <button id="sound-btn" class="action-btn">Play Sound</button>
+        </div>
+      </section>
+    </main>
+
+    <!-- Footer: Status Information -->
+    <footer class="info-section">
+      <div class="info-row">
+        <span class="info-label">Antennas:</span>
+        <span class="info-value" id="antenna-status">running</span>
       </div>
-    </div>
+      <div class="info-row">
+        <span class="info-label">Camera:</span>
+        <span class="info-value" id="camera-status">initializing...</span>
+      </div>
+      <div class="info-row">
+        <span class="info-label">Hands Detected:</span>
+        <span class="info-value" id="hands-detected">0</span>
+      </div>
+      <div class="info-row">
+        <span class="info-label">Last Update:</span>
+        <span class="info-value" id="last-update">Never</span>
+      </div>
+    </footer>
 
     <script src="/static/main.js"></script>
   </body>

@@ -2,7 +2,7 @@
 
 import threading
 import time
-from typing import Callable
+from typing import Callable, List, Dict, Any
 
 from ..config.config_loader import Config
 from .camera_handler import CameraHandler
@@ -10,7 +10,11 @@ from .hand_detector import HandDetector
 
 
 class VideoProcessor:
-    def __init__(self, config: Config, on_finger_count_update: Callable[[int], None]):
+    def __init__(
+        self,
+        config: Config,
+        on_finger_count_update: Callable[[int, List[Dict[str, Any]]], None],
+    ):
         self.config = config
         self.on_finger_count_update = on_finger_count_update
 
@@ -70,12 +74,12 @@ class VideoProcessor:
                     timestamp_ms = int(time.time() * 1000)
 
                     # Detect hands and count fingers
-                    total_fingers, _ = self.hand_detector.detect_hands(
+                    total_fingers, _, hands_data = self.hand_detector.detect_hands(
                         frame, timestamp_ms
                     )
 
-                    # Update finger count via callback
-                    self.on_finger_count_update(total_fingers)
+                    # Update finger count and hand data via callback
+                    self.on_finger_count_update(total_fingers, hands_data)
 
                     # Sleep to maintain target FPS
                     time.sleep(frame_delay)

@@ -10,6 +10,7 @@ warnings.filterwarnings("ignore", category=UserWarning)
 from reachy_mini import ReachyMini, ReachyMiniApp
 import time
 from pathlib import Path
+from typing import List, Dict, Any
 
 from .config.config_loader import get_config
 from .vision.video_processor import VideoProcessor
@@ -42,15 +43,25 @@ class AgReachyMiniVisionTracking(ReachyMiniApp):
         self.video_processor: VideoProcessor | None = None
         self.robot_controller: RobotController | None = None
 
-    def _on_finger_count_update(self, count: int) -> None:
+    def _on_finger_count_update(
+        self, count: int, hands_data: List[Dict[str, Any]]
+    ) -> None:
         self.shared_state.set_finger_count(count)
+        self.shared_state.set_hands_data(hands_data)
+
         # Broadcast to all connected WebSocket clients from a different thread
         event_loop = self.event_loop_ref[0]
         if event_loop and not event_loop.is_closed():
+            # Build WebSocket message with individual hand data
+            message = {
+                "type": "finger_count",
+                "finger_count": count,
+                "hands_detected": len(hands_data),
+                "hands": hands_data,
+            }
+
             asyncio.run_coroutine_threadsafe(
-                self.connection_manager.broadcast(
-                    {"type": "finger_count", "finger_count": count}
-                ),
+                self.connection_manager.broadcast(message),
                 event_loop,
             )
 
@@ -64,6 +75,24 @@ class AgReachyMiniVisionTracking(ReachyMiniApp):
             self.connection_manager,
             self.event_loop_ref,
         )
+
+    def _handle_robot_control(self, reachy_mini: ReachyMini, direction: str) -> None:
+        """Handle robot control commands."""
+        # This is a placeholder implementation
+        # Adjust the head pose based on direction
+        if direction == "up":
+            # Look up
+            print(f"Robot control: {direction} - Looking up")
+            # You can implement specific head movements here
+        elif direction == "down":
+            # Look down
+            print(f"Robot control: {direction} - Looking down")
+        elif direction == "left":
+            # Look left
+            print(f"Robot control: {direction} - Looking left")
+        elif direction == "right":
+            # Look right
+            print(f"Robot control: {direction} - Looking right")
 
     def run(self, reachy_mini: ReachyMini, stop_event: threading.Event):
         self._setup_api_endpoints()
@@ -91,6 +120,11 @@ class AgReachyMiniVisionTracking(ReachyMiniApp):
                 antennas = self.robot_controller.calculate_antenna_positions(
                     finger_count, elapsed_time, antennas_enabled
                 )
+
+                # Handle robot control commands
+                robot_command = self.shared_state.get_robot_control_command()
+                if robot_command:
+                    self._handle_robot_control(reachy_mini, robot_command)
 
                 # Handle sound play request
                 if self.shared_state.is_sound_play_requested():

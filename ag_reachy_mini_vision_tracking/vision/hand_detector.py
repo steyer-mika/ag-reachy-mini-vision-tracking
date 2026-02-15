@@ -2,7 +2,7 @@ import mediapipe as mp
 from mediapipe.tasks import python
 from mediapipe.tasks.python import vision
 import urllib.request
-from typing import Optional, Tuple, Any
+from typing import Optional, Tuple, Any, List, Dict
 import numpy as np
 
 from ..config.config_loader import Config
@@ -74,14 +74,15 @@ class HandDetector:
 
     def detect_hands(
         self, frame: np.ndarray | None, timestamp_ms: int
-    ) -> Tuple[int, Optional[object]]:
+    ) -> Tuple[int, Optional[object], List[Dict[str, Any]]]:
         if self.landmarker is None or frame is None:
-            return 0, None
+            return 0, None, []
 
         mp_image = mp.Image(image_format=mp.ImageFormat.SRGB, data=frame)
         detection_result = self.landmarker.detect_for_video(mp_image, timestamp_ms)
 
         total_fingers = 0
+        hands_data = []
 
         if detection_result.hand_landmarks:
             for idx, hand_landmarks in enumerate(detection_result.hand_landmarks):
@@ -89,7 +90,15 @@ class HandDetector:
                 fingers = self.count_raised_fingers(hand_landmarks, handedness)
                 total_fingers += fingers
 
-        return total_fingers, detection_result
+                # Build individual hand data
+                hands_data.append(
+                    {
+                        "handedness": handedness,
+                        "fingers": fingers,
+                    }
+                )
+
+        return total_fingers, detection_result, hands_data
 
     def close(self) -> None:
         if self.landmarker:

@@ -7,9 +7,11 @@ from .websocket.connection_manager import ConnectionManager
 
 
 class AntennaState(BaseModel):
-    """Model for antenna state updates."""
-
     enabled: bool
+
+
+class RobotControl(BaseModel):
+    direction: str
 
 
 def setup_api_endpoints(
@@ -27,6 +29,14 @@ def setup_api_endpoints(
     def request_sound_play():
         shared_state.request_sound_play()
         return {"status": "requested"}
+
+    @app.post("/robot_control")
+    def handle_robot_control(control: RobotControl):
+        valid_directions = ["up", "down", "left", "right"]
+        if control.direction in valid_directions:
+            shared_state.set_robot_control_command(control.direction)
+            return {"status": "ok", "direction": control.direction}
+        return {"status": "error", "message": "Invalid direction"}
 
     @app.get("/finger_count")
     def get_finger_count():
