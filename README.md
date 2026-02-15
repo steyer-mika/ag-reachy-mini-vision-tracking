@@ -19,7 +19,7 @@
 
 - MediaPipe `https://ai.google.dev/edge/mediapipe/solutions/vision/hand_landmarker/python?hl=en`
 - Reachy Mini `https://huggingface.co/docs/reachy_mini/platforms/simulation/get_started`
-- Examples `https://github.com/pollen-robotics/reachy_mini/tree/main/examples`
+- Examples `https://github.com/pollen-robotics/reachy_mini/tree/main/examples` && `https://github.com/Seeed-Projects/reachy-mini-starter`
 - App CLI `https://huggingface.co/blog/pollen-robotics/make-and-publish-your-reachy-mini-apps`
 
 ## Metadata

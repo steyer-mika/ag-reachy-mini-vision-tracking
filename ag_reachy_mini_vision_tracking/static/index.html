@@ -2,13 +2,21 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <title>Reachy Mini example app template</title>
+    <title>Reachy Mini - Finger Counter</title>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <link rel="stylesheet" href="/static/style.css" />
   </head>
 
   <body>
-    <h1>Reachy Mini - Control Panel</h1>
+    <h1>Reachy Mini - Finger Counter</h1>
+
+    <div id="finger-display">
+      <div class="finger-count-wrapper">
+        <div class="finger-emoji">✋</div>
+        <div class="finger-count">0</div>
+        <div class="finger-label">Fingers Detected</div>
+      </div>
+    </div>
 
     <div id="controls">
       <label style="display: flex; align-items: center; gap: 8px">
@@ -19,7 +27,17 @@
       <button id="sound-btn">Play Sound</button>
     </div>
 
-    <div id="status">Antennas status: running</div>
+    <div id="status">
+      <div class="status-item">
+        <span class="status-label">Antennas:</span>
+        <span id="antenna-status">running</span>
+      </div>
+      <div class="status-item">
+        <span class="status-label">Camera:</span>
+        <span id="camera-status">initializing...</span>
+      </div>
+    </div>
+
     <script src="/static/main.js"></script>
   </body>
 </html>
