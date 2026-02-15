@@ -10,6 +10,8 @@ from mediapipe.tasks import python
 from mediapipe.tasks.python import vision
 from pathlib import Path
 
+from .config.config_loader import get_config
+
 
 class AgReachyMiniVisionTracking(ReachyMiniApp):
     custom_app_url: str | None = "http://0.0.0.0:8042"
@@ -17,6 +19,11 @@ class AgReachyMiniVisionTracking(ReachyMiniApp):
 
     def __init__(self):
         super().__init__()
+
+        # Load config
+        self.config = get_config(
+            Path(__file__).resolve().parents[0] / "config" / "config.yml"
+        )
 
         # Shared state for finger count
         self.current_finger_count = 0
@@ -70,8 +77,10 @@ class AgReachyMiniVisionTracking(ReachyMiniApp):
         # Try to access camera
         cap = None
         try:
-            for cam_index in [0, 1, 2]:
+            for cam_index in self.config.CAMERA_INDICES:
                 cap = cv2.VideoCapture(cam_index)
+                cap.set(cv2.CAP_PROP_FRAME_WIDTH, self.config.CAMERA_WIDTH)
+                cap.set(cv2.CAP_PROP_FRAME_HEIGHT, self.config.CAMERA_HEIGHT)
                 if cap.isOpened():
                     print(f"Camera opened successfully on index {cam_index}")
                     break
@@ -87,23 +96,21 @@ class AgReachyMiniVisionTracking(ReachyMiniApp):
 
         # Initialize MediaPipe Hand Landmarker
         try:
-            # Download model if needed
-            model_path = Path.home() / ".mediapipe" / "hand_landmarker.task"
+            model_path = self.config.MODEL_PATH
             model_path.parent.mkdir(parents=True, exist_ok=True)
 
             if not model_path.exists():
                 print("Downloading MediaPipe hand landmark model...")
                 import urllib.request
 
-                model_url = "https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/1/hand_landmarker.task"
-                urllib.request.urlretrieve(model_url, model_path)
+                urllib.request.urlretrieve(self.config.MODEL_URL, model_path)
                 print("Model downloaded successfully")
 
             base_options = python.BaseOptions(model_asset_path=str(model_path))
             options = vision.HandLandmarkerOptions(
                 base_options=base_options,
                 running_mode=vision.RunningMode.VIDEO,
-                num_hands=2,
+                num_hands=self.config.MAX_HANDS,
             )
             self.landmarker = vision.HandLandmarker.create_from_options(options)
             print("MediaPipe Hand Landmarker initialized")
@@ -113,51 +120,35 @@ class AgReachyMiniVisionTracking(ReachyMiniApp):
             cap.release()
             return
 
-        frame_count = 0
-
         while not stop_event.is_set():
-            try:
-                ret, frame = cap.read()
-                if not ret:
-                    print("Failed to grab frame")
-                    time.sleep(0.1)
-                    continue
+            ret, frame = cap.read()
+            if not ret:
+                time.sleep(1 / self.config.TARGET_FPS)
+                continue
 
-                frame_count += 1
-                timestamp_ms = int(time.time() * 1000)
-
-                # Flip frame horizontally for mirror effect
+            # Flip if configured
+            if self.config.CAMERA_FLIP_HORIZONTAL:
                 frame = cv2.flip(frame, 1)
 
-                # Convert BGR to RGB for MediaPipe
-                rgb_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-                mp_image = mp.Image(image_format=mp.ImageFormat.SRGB, data=rgb_frame)
+            # Convert to RGB
+            rgb_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+            mp_image = mp.Image(image_format=mp.ImageFormat.SRGB, data=rgb_frame)
 
-                # Detect hands
-                detection_result = self.landmarker.detect_for_video(
-                    mp_image, timestamp_ms
-                )
+            # Detect hands
+            timestamp_ms = int(time.time() * 1000)
+            detection_result = self.landmarker.detect_for_video(mp_image, timestamp_ms)
 
-                total_fingers = 0
+            total_fingers = 0
+            if detection_result.hand_landmarks:
+                for idx, hand_landmarks in enumerate(detection_result.hand_landmarks):
+                    handedness = detection_result.handedness[idx][0].category_name
+                    fingers = self.count_raised_fingers(hand_landmarks, handedness)
+                    total_fingers += fingers
 
-                # Count fingers from all detected hands
-                if detection_result.hand_landmarks:
-                    for idx, hand_landmarks in enumerate(
-                        detection_result.hand_landmarks
-                    ):
-                        handedness = detection_result.handedness[idx][0].category_name
-                        fingers = self.count_raised_fingers(hand_landmarks, handedness)
-                        total_fingers += fingers
+            with self.finger_count_lock:
+                self.current_finger_count = total_fingers
 
-                # Update shared state
-                with self.finger_count_lock:
-                    self.current_finger_count = total_fingers
-
-                time.sleep(0.033)  # ~30 FPS
-
-            except Exception as e:
-                print(f"Error in video processing: {e}")
-                time.sleep(0.1)
+            time.sleep(1 / self.config.TARGET_FPS)
 
         # Cleanup
         if self.landmarker:
@@ -168,11 +159,10 @@ class AgReachyMiniVisionTracking(ReachyMiniApp):
 
     def run(self, reachy_mini: ReachyMini, stop_event: threading.Event):
         t0 = time.time()
-
         antennas_enabled = True
         sound_play_requested = False
 
-        # Start video processing thread
+        # Start video thread
         video_thread = threading.Thread(
             target=self.process_video_stream,
             args=(reachy_mini, stop_event),
@@ -206,27 +196,30 @@ class AgReachyMiniVisionTracking(ReachyMiniApp):
         # Main control loop
         while not stop_event.is_set():
             t = time.time() - t0
-
-            # Get current finger count
             with self.finger_count_lock:
                 finger_count = self.current_finger_count
 
-            # Move head based on finger count
-            # 0 fingers: look down
-            # 5 fingers: look straight
-            # 10 fingers: look up
-            pitch_deg = (finger_count - 5) * 4.0
-            pitch_deg = np.clip(pitch_deg, -20, 20)
+            # Head pitch based on finger count
+            pitch_deg = np.clip(
+                (finger_count - 5) * self.config.HEAD_PITCH_SCALE,
+                self.config.HEAD_PITCH_MIN,
+                self.config.HEAD_PITCH_MAX,
+            )
 
-            # Add gentle sway
-            yaw_deg = 15.0 * np.sin(2.0 * np.pi * 0.1 * t)
+            # Yaw sway
+            yaw_deg = self.config.HEAD_YAW_AMPLITUDE * np.sin(
+                2.0 * np.pi * self.config.HEAD_YAW_FREQUENCY * t
+            )
 
             head_pose = create_head_pose(yaw=yaw_deg, pitch=pitch_deg, degrees=True)
 
+            # Antennas
             if antennas_enabled:
-                # Antennas react to finger count
-                amp_deg = min(finger_count * 5.0, 45.0)
-                a = amp_deg * np.sin(2.0 * np.pi * 0.5 * t)
+                amp_deg = min(
+                    finger_count * self.config.ANTENNA_SCALE,
+                    self.config.ANTENNA_MAX_AMPLITUDE,
+                )
+                a = amp_deg * np.sin(2.0 * np.pi * self.config.ANTENNA_FREQUENCY * t)
                 antennas_deg = np.array([a, -a])
             else:
                 antennas_deg = np.array([0.0, 0.0])
@@ -238,14 +231,10 @@ class AgReachyMiniVisionTracking(ReachyMiniApp):
 
             antennas_rad = np.deg2rad(antennas_deg)
 
-            reachy_mini.set_target(
-                head=head_pose,
-                antennas=antennas_rad,
-            )
+            reachy_mini.set_target(head=head_pose, antennas=antennas_rad)
 
-            time.sleep(0.02)
+            time.sleep(self.config.CONTROL_LOOP_RATE)
 
-        # Wait for video thread to finish
         video_thread.join(timeout=2.0)
 
 

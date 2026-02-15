@@ -1,0 +1,35 @@
+mediapipe:
+  model_path: ./models/hand_landmarker.task
+  model_url: https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/1/hand_landmarker.task
+
+camera:
+  indices: [0, 1, 2]
+  width: 640
+  height: 480
+  target_fps: 30
+  flip_horizontal: true
+
+tracking:
+  max_hands: 2
+  min_detection_confidence: 0.5
+  min_tracking_confidence: 0.5
+
+robot:
+  head:
+    pitch_min: -20.0 # Minimum pitch angle (degrees)
+    pitch_max: 20.0 # Maximum pitch angle (degrees)
+    pitch_scale: 4.0 # Scale factor for finger count to pitch
+    yaw_amplitude: 15.0 # Amplitude of yaw oscillation (degrees)
+    yaw_frequency: 0.1 # Frequency of yaw oscillation (Hz)
+
+  antenna:
+    max_amplitude: 45.0 # Maximum antenna angle (degrees)
+    scale: 5.0 # Scale factor for finger count to amplitude
+    frequency: 0.5 # Frequency of antenna oscillation (Hz)
+
+  control_loop_rate: 0.02 # Control loop sleep time (seconds)
+
+# API Configuration
+api:
+  host: 0.0.0.0
+  port: 8042
