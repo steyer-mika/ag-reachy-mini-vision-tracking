@@ -25,7 +25,7 @@ class HandDetector:
 
         if not model_path.exists():
             print(f"Downloading MediaPipe hand landmark model to {model_path}...")
-            urllib.request.urlretrieve(self.config.MODEL_URL, model_path)
+            urllib.request.urlretrieve(self.config.HAND_LANDMARKER_MODEL, model_path)
             print("Model downloaded successfully")
 
     def _initialize_landmarker(self) -> None:

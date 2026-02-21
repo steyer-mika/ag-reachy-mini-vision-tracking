@@ -30,7 +30,10 @@ class Config:
                 return default
         return value
 
-    # MediaPipe Model
+    @property
+    def DEV_MODE(self) -> bool:
+        return self._get("dev_mode", default=False)
+
     @property
     def MODEL_PATH(self) -> Path:
         return (
@@ -41,11 +44,28 @@ class Config:
         )
 
     @property
-    def MODEL_URL(self) -> str:
+    def HAND_LANDMARKER_MODEL(self) -> str:
         return self._get(
             "mediapipe",
-            "model_url",
+            "hand_landmarker_model",
             default="https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/1/hand_landmarker.task",
+        )
+
+    @property
+    def FACE_MODEL_PATH(self) -> Path:
+        return (
+            Path(os.getcwd())
+            / "ag_reachy_mini_vision_tracking"
+            / "models"
+            / "blaze_face_short_range.tflite"
+        )
+
+    @property
+    def FACE_MODEL_URL(self) -> str:
+        return self._get(
+            "mediapipe",
+            "face_detector_model",
+            default="https://storage.googleapis.com/mediapipe-models/face_detector/blaze_face_short_range/float16/1/blaze_face_short_range.tflite",
         )
 
     @property
@@ -80,7 +100,35 @@ class Config:
     def MIN_TRACKING_CONFIDENCE(self) -> float:
         return self._get("tracking", "min_tracking_confidence", default=0.5)
 
-    # Robot Control Configuration
+    @property
+    def TRACKING_LOST_THRESHOLD(self) -> int:
+        """Consecutive frames without a face before PID resets."""
+        return self._get("autonomous_tracking", "lost_threshold", default=10)
+
+    @property
+    def TRACKING_KP_YAW(self) -> float:
+        return self._get("autonomous_tracking", "pid", "yaw", "kp", default=30.0)
+
+    @property
+    def TRACKING_KI_YAW(self) -> float:
+        return self._get("autonomous_tracking", "pid", "yaw", "ki", default=0.0)
+
+    @property
+    def TRACKING_KD_YAW(self) -> float:
+        return self._get("autonomous_tracking", "pid", "yaw", "kd", default=5.0)
+
+    @property
+    def TRACKING_KP_PITCH(self) -> float:
+        return self._get("autonomous_tracking", "pid", "pitch", "kp", default=20.0)
+
+    @property
+    def TRACKING_KI_PITCH(self) -> float:
+        return self._get("autonomous_tracking", "pid", "pitch", "ki", default=0.0)
+
+    @property
+    def TRACKING_KD_PITCH(self) -> float:
+        return self._get("autonomous_tracking", "pid", "pitch", "kd", default=3.0)
+
     @property
     def HEAD_PITCH_MIN(self) -> float:
         return self._get("robot", "head", "pitch_min", default=-20.0)
@@ -90,24 +138,14 @@ class Config:
         return self._get("robot", "head", "pitch_max", default=20.0)
 
     @property
-    def HEAD_PITCH_SCALE(self) -> float:
-        return self._get("robot", "head", "pitch_scale", default=4.0)
-
-    @property
     def HEAD_YAW_AMPLITUDE(self) -> float:
-        return self._get("robot", "head", "yaw_amplitude", default=15.0)
+        """Maximum yaw angle (degrees). Also used as the PID output limit."""
+        return self._get("robot", "head", "yaw_amplitude", default=30.0)
 
     @property
-    def HEAD_YAW_FREQUENCY(self) -> float:
-        return self._get("robot", "head", "yaw_frequency", default=0.1)
-
-    @property
-    def ANTENNA_MAX_AMPLITUDE(self) -> float:
-        return self._get("robot", "antenna", "max_amplitude", default=45.0)
-
-    @property
-    def ANTENNA_SCALE(self) -> float:
-        return self._get("robot", "antenna", "scale", default=5.0)
+    def ANTENNA_AMPLITUDE(self) -> float:
+        """Fixed oscillation amplitude in degrees (no longer finger-driven)."""
+        return self._get("robot", "antenna", "amplitude", default=20.0)
 
     @property
     def ANTENNA_FREQUENCY(self) -> float:
@@ -117,7 +155,6 @@ class Config:
     def CONTROL_LOOP_RATE(self) -> float:
         return self._get("robot", "control_loop_rate", default=0.02)
 
-    # API Configuration
     @property
     def API_HOST(self) -> str:
         return self._get("api", "host", default="0.0.0.0")

@@ -42,23 +42,19 @@ class AppState:
             self._state["sound_play_requested"] = False
 
     def set_robot_control_command(self, direction: str) -> None:
-        """Set a robot control command (up, down, left, right)."""
         with self._lock:
             self._state["robot_control_command"] = direction
 
     def get_robot_control_command(self) -> Optional[str]:
-        """Get and clear the robot control command."""
         with self._lock:
             command = self._state["robot_control_command"]
             self._state["robot_control_command"] = None
             return command
 
     def set_hands_data(self, hands_data: list) -> None:
-        """Store individual hand tracking data."""
         with self._lock:
             self._state["hands_data"] = hands_data
 
     def get_hands_data(self) -> list:
-        """Get individual hand tracking data."""
         with self._lock:
             return self._state["hands_data"].copy()

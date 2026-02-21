@@ -1,5 +1,8 @@
+dev_mode: true
+
 mediapipe:
-  model_url: https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/1/hand_landmarker.task
+  hand_landmarker_model: https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/1/hand_landmarker.task
+  face_detector_model: https://storage.googleapis.com/mediapipe-models/face_detector/blaze_face_short_range/float16/1/blaze_face_short_range.tflite
 
 camera:
   indices: [0, 1, 2]
@@ -13,22 +16,31 @@ tracking:
   min_detection_confidence: 0.5
   min_tracking_confidence: 0.5
 
+autonomous_tracking:
+  lost_threshold: 10
+
+  pid:
+    yaw:
+      kp: 30.0 # higher = faster correction but more jitter
+      ki: 0.0 # leave at 0 unless head drifts off-centre persistently
+      kd: 5.0 # higher = more damping, less overshoot
+    pitch:
+      kp: 20.0
+      ki: 0.0
+      kd: 3.0
+
 robot:
   head:
-    pitch_min: -20.0 # Minimum pitch angle (degrees)
-    pitch_max: 20.0 # Maximum pitch angle (degrees)
-    pitch_scale: 4.0 # Scale factor for finger count to pitch
-    yaw_amplitude: 15.0 # Amplitude of yaw oscillation (degrees)
-    yaw_frequency: 0.1 # Frequency of yaw oscillation (Hz)
+    pitch_min: -20.0 # degrees
+    pitch_max: 20.0 # degrees
+    yaw_amplitude: 30.0 # maximum yaw travel (degrees), also PID output limit
 
   antenna:
-    max_amplitude: 45.0 # Maximum antenna angle (degrees)
-    scale: 5.0 # Scale factor for finger count to amplitude
-    frequency: 0.5 # Frequency of antenna oscillation (Hz)
+    amplitude: 20.0 # fixed oscillation amplitude (degrees)
+    frequency: 0.5 # oscillation frequency (Hz)
 
-  control_loop_rate: 0.02 # Control loop sleep time (seconds)
+  control_loop_rate: 0.02 # seconds between control ticks
 
-# API Configuration
 api:
   host: 0.0.0.0
   port: 8042
