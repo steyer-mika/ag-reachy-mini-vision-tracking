@@ -13,7 +13,7 @@
 ## Run Program
 
 - `reachy-mini-daemon --sim`
-- `python -m ag_reachy_mini_vision_tracking.src.main`
+- `python -m ag_reachy_mini_vision_tracking.main`
 
 ## References
 
@@ -26,7 +26,7 @@
 
 - Vision
   - [x] Hand detection
-  - [x] Finger counting (0–10)
+  - [x] Finger counting (0-10)
   - [ ] Improve finger counter accuracy & smoothing
   - [ ] Fix Left/Right Hand mixup
 
